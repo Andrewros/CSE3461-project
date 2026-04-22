@@ -1,6 +1,18 @@
 import socket
 import threading
 
+# --- FEATURE 3  ---
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+import os
+aesgcm = AESGCM(b'sixteen_byte_key_sixteen_byte_ky') 
+
+def encrypt_f3(message):
+    nonce = os.urandom(12)
+    return nonce + aesgcm.encrypt(nonce, message.encode(), None)
+
+def decrypt_f3(data):
+    return aesgcm.decrypt(data[:12], data[12:], None).decode()
+# ------------------------
 HOST = '0.0.0.0'
 PORT = 12345
 
@@ -25,7 +37,12 @@ def handle_client(client_socket):
         print(f"{username} connected")
 
         while True:
-            message = client_socket.recv(1024).decode().strip()
+            raw_data = client_socket.recv(1024).decode('latin-1').strip()
+            if not raw_data:
+                break
+            # DEMONSTRATION LOG: Proof that the server sees ciphertext, not plaintext.
+            print(f"SERVER LOG: Intercepted raw data -> {raw_data}")
+            message = raw_data
 
             if not message:
                 break
@@ -41,15 +58,17 @@ def handle_client(client_socket):
                 continue
 
             target = parts[0][1:]
-            msg = parts[1]
+            encrypted_msg = parts[1]
 
             with lock:
                 if target in clients:
-                    clients[target].send(f"{username}: {msg}\n".encode())
+                    final_payload = f"{username}: {encrypted_msg}\n"
+                    clients[target].send(final_payload.encode('latin-1'))
                 else:
                     client_socket.send("User not found\n".encode())
 
-    except:
+    except Exception as e:
+        print(f"Error occurred: {e}")
         pass
 
     finally:
@@ -63,6 +82,7 @@ def handle_client(client_socket):
 
 def start_server():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server.bind((HOST, PORT))
     server.listen()
 
