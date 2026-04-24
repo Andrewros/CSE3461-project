@@ -1,5 +1,6 @@
 import socket
 import threading
+import sys
 
 # --- FEATURE 3 ---
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -17,7 +18,7 @@ def decrypt_f3(latin_str):
     return aesgcm.decrypt(data[:12], data[12:], None).decode()
 # ------------------------
 
-HOST = '127.0.0.1'
+HOST = sys.argv[1] if len(sys.argv) > 1 else '127.0.0.1'
 PORT = 12345
 
 def receive_messages(sock):

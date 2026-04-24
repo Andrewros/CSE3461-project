@@ -1,5 +1,6 @@
 import socket
 import threading
+import sys
 
 # --- FEATURE 3  ---
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -90,5 +91,6 @@ class ChatServer:
                 args=(client_socket, client_address)
             )
             thread.start()
-server = ChatServer("0.0.0.0", 12345)
+host = sys.argv[1] if len(sys.argv) > 1 else "0.0.0.0"
+server = ChatServer(host, 12345)
 server.start()
